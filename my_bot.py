@@ -89,6 +89,11 @@ def send_welcome(message):
 @bot.message_handler(func=lambda m: m.text == "🦴 Проверить продукт")
 def check_product(message):
     bot.send_message(message.chat.id, CHECK_TEXT)
+    
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    photo_url = "https://imgur.com/a/YYyjujx"  
+    bot.send_photo(message.chat.id, photo_url, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🥣 Собрать миску")
 def make_bowl(message):
