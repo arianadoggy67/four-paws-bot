@@ -1,12 +1,25 @@
 import telebot
 from telebot import types
-
+import threading
+import time
+import requests
 # ========== ТВОИ НАСТРОЙКИ (ЗАМЕНИ ЗДЕСЬ!) ==========
 TOKEN = "8999914746:AAEAvcW4ls2Rka1EJojT9J7XPKimFrnwj1U"
 YOUR_TELEGRAM_ID = 5029046232
 # =================================================
 
-bot = telebot.TeleBot(8999914746:AAEAvcW4ls2Rka1EJojT9J7XPKimFrnwj1U)
+bot = telebot.TeleBot("8999914746:AAEAvcW4ls2Rka1EJojT9J7XPKimFrnwj1U")
+
+# ========== ЗАЩИТА ОТ ЗАСЫПАНИЯ ==========
+def keep_alive():
+    while True:
+        time.sleep(600)
+        try:
+            requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
+        except:
+            pass
+
+threading.Thread(target=keep_alive, daemon=True).start()
 
 WELCOME_TEXT = """🐾 Привет, осознанный собачник!
 
