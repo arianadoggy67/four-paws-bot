@@ -92,7 +92,7 @@ def check_product(message):
     
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    photo_url = "https://i.postimg.cc/qvmR3JgW/Artguru-20260713213826-artguru-(1).png"  
+    photo_url = "AgACAgIAAxkBAAFPDTNqVWjhfM5pNpyXOQGz0RXN4RwbswACHiJrGxQ4qEo95HtVfMGTqQEAAwIAA3kAAzwE"  
     bot.send_photo(message.chat.id, photo_url, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🥣 Собрать миску")
