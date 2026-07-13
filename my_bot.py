@@ -4,11 +4,11 @@ import threading
 import time
 import requests
 # ========== ТВОИ НАСТРОЙКИ (ЗАМЕНИ ЗДЕСЬ!) ==========
-TOKEN = "8999914746:AAEAvcW4ls2Rka1EJojT9J7XPKimFrnwj1U"
+TOKEN ="8999914746:AAGYGp8gaQGuAHf0y4eYnTCetev7jC2CjPY"
 YOUR_TELEGRAM_ID = 5029046232
 # =================================================
 
-bot = telebot.TeleBot("8999914746:AAEAvcW4ls2Rka1EJojT9J7XPKimFrnwj1U")
+bot = telebot.TeleBot("8999914746:AAGYGp8gaQGuAHf0y4eYnTCetev7jC2CjPY")
 
 # ========== ЗАЩИТА ОТ ЗАСЫПАНИЯ ==========
 def keep_alive():
