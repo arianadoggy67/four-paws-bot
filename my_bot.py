@@ -94,8 +94,7 @@ def home():
 # ========== БОТ-ЧАСТЬ ==========
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    with open("welcome.png.png", "rb") as photo:
-        bot.send_photo(message.chat.id, photo, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
+    bot.send_message(message.chat.id, WELCOME_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🦴 Проверить продукт")
 def check_product(message):
