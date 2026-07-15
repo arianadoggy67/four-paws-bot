@@ -14,21 +14,6 @@ YOUR_TELEGRAM_ID = 5029046232
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-# ========== АВТО-ОЗДОРОВИТЕЛЬ ==========
-def auto_healer():
-    while True:
-        time.sleep(3600)
-        try:
-            response = requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
-            if response.status_code != 200:
-                time.sleep(5)
-                requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
-        except:
-            pass
-
-threading.Thread(target=auto_healer, daemon=True).start()
-# =========================================
-
 # ========== ЗАЩИТА ОТ ЗАСЫПАНИЯ ==========
 def keep_alive():
     while True:
@@ -145,4 +130,4 @@ if __name__ == '__main__':
         app.run(host="0.0.0.0", port=10000)
     else:
         threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 10000}, daemon=True).start()
-        bot.infinity_polling()
+        bot.infinity_polling(skip_pending=True)
