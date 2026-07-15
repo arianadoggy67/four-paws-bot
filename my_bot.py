@@ -14,6 +14,21 @@ YOUR_TELEGRAM_ID = 5029046232
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
+# ========== АВТО-ОЗДОРОВИТЕЛЬ ==========
+def auto_healer():
+    while True:
+        time.sleep(3600)
+        try:
+            response = requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
+            if response.status_code != 200:
+                time.sleep(5)
+                requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
+        except:
+            pass
+
+threading.Thread(target=auto_healer, daemon=True).start()
+# =========================================
+
 # ========== ЗАЩИТА ОТ ЗАСЫПАНИЯ ==========
 def keep_alive():
     while True:
@@ -48,7 +63,7 @@ CLUB_TEXT = """👩‍🍳 **Четыре Лапы Гурмана Премиум
 Всё это — по платной подписке.
 Напиши «Хочу в клуб», и я пришлю реквизиты. Сразу после оплаты ты получишь ссылку на наш закрытый канал «Четыре лапы Премиум». Первые 20 участников — по специальной цене. 🐶❤️"""
 
-ASK_TEXT = "💬 Просто напиши свой вопрос прямо здесь, и Ариана ответит тебе лично. Я читаю все сообщения и рада помочь каждому хвостику."
+ASK_TEXT = "💬 Просто напиши свой вопрос прямо здесь, и Юля ответит тебе лично. Я читаю все сообщения и рада помочь каждому хвостику."
 
 ABOUT_TEXT = """🐾 О клубе «Четыре Лапы Гурмана»
 
@@ -96,6 +111,7 @@ def home():
 def send_welcome(message):
     photo_url = "https://i.postimg.cc/qvmR3JgW/Artguru-20260713213826-artguru-(1).png"
     bot.send_photo(message.chat.id, photo_url, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
+
 @bot.message_handler(func=lambda m: m.text == "🦴 Проверить продукт")
 def check_product(message):
     bot.send_message(message.chat.id, CHECK_TEXT)
@@ -121,18 +137,6 @@ def forward_to_you(message):
     user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
     bot.send_message(YOUR_TELEGRAM_ID, user_info)
     bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️")
-    def auto_healer():
-    while True:
-        time.sleep(3600)
-        try:
-            response = requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
-            if response.status_code != 200:
-                time.sleep(5)
-                requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
-        except:
-            pass
-
-threading.Thread(target=auto_healer, daemon=True).start()
 
 # ========== ЗАПУСК ==========
 if __name__ == '__main__':
@@ -141,5 +145,4 @@ if __name__ == '__main__':
         app.run(host="0.0.0.0", port=10000)
     else:
         threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 10000}, daemon=True).start()
-bot.infinity_polling()
-                
+        bot.infinity_polling()
