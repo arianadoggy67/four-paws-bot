@@ -26,6 +26,18 @@ def keep_alive():
 threading.Thread(target=keep_alive, daemon=True).start()
 # =========================================
 
+# ========== ЕЖЕМИНУТНЫЙ ПИНГ ==========
+def minute_ping():
+    while True:
+        time.sleep(60)
+        try:
+            requests.get("https://four-paws-bot.onrender.com")
+        except:
+            pass
+
+threading.Thread(target=minute_ping, daemon=True).start()
+# ======================================
+
 WELCOME_TEXT = """🐾 Привет, осознанный собачник!
 
 Я — клуб «Четыре Лапы Гурмана». Меня создала Ариана — профессиональный повар и хозяйка привередливой чихуахуа Мэгги. 🐶❤️
