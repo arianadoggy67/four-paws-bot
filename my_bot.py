@@ -5,9 +5,11 @@ import threading
 import time
 import requests
 from flask import Flask
+
+# ========== ТВОИ НАСТРОЙКИ ==========
 TOKEN = os.environ.get("BOT_TOKEN")
 YOUR_TELEGRAM_ID = 5029046232
-# =================================================
+# =====================================
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -22,6 +24,7 @@ def keep_alive():
             pass
 
 threading.Thread(target=keep_alive, daemon=True).start()
+# =========================================
 
 WELCOME_TEXT = """🐾 Привет, осознанный собачник!
 
@@ -42,16 +45,16 @@ CLUB_TEXT = """👩‍🍳 **Четыре Лапы Гурмана Премиум
 🔮 Кулинарный гороскоп твоего питомца
 💬 Живое общение и поддержка — возможность задать вопрос лично мне и получить ответ
 
-Доступ — по платной подписке.
+Всё это — по платной подписке.
 Напиши «Хочу в клуб», и я пришлю реквизиты. Сразу после оплаты ты получишь ссылку на наш закрытый канал «Четыре лапы Премиум». Первые 20 участников — по специальной цене. 🐶❤️"""
 
-ASK_TEXT = "💬 Просто напиши свой вопрос прямо здесь, и Ариана ответит тебе лично. Я читаю все сообщения и рада помочь каждому хвостику."
+ASK_TEXT = "💬 Просто напиши свой вопрос прямо здесь, и Юля ответит тебе лично. Я читаю все сообщения и рада помочь каждому хвостику."
 
 ABOUT_TEXT = """🐾 О клубе «Четыре Лапы Гурмана»
 
 Наш клуб родился из любви — к еде, к собакам и к осознанной заботе.
 
-Меня зовут Ариана. Я пекарь, кондитер и хозяйка привередливой чихуахуа Мэгги. Однажды я поймала себя на том, что панически гуглю «можно ли собаке огурец» 🥒 в три часа ночи. И поняла: миллионы людей хотят кормить своих питомцев вкусно и безопасно, но тонут в море противоречивой информации.
+Меня зовут Ариана. Я пекарь, кондитер и хозяйка привередливой чихуахуа Мэгги. Однажды я поймала себя на том, что панически гуглю «можно ли собаке огурец»🥒 в три часа ночи. И поняла: миллионы людей хотят кормить своих питомцев вкусно и безопасно, но тонут в море противоречивой информации.
 
 Наша миссия — сделать путь к натуральному питанию спокойным, радостным и научно обоснованным. Чтобы каждая миска была актом любви, а не тревоги.
 
@@ -82,19 +85,21 @@ def get_main_keyboard():
         types.KeyboardButton("🐾 О клубе")
     )
     return keyboard
-    # ========== ВЕБ-ЧАСТЬ ==========
+
+# ========== ВЕБ-ЧАСТЬ ==========
 @app.route('/')
 def home():
     return "Bot is running!"
-   @bot.message_handler(commands=['start'])
+
+# ========== БОТ-ЧАСТЬ ==========
+@bot.message_handler(commands=['start'])
 def send_welcome(message):
-    photo_url = "AgACAgIAAxkBAAFPDTNqVWjhfM5pNpyXOQGz0RXN4RwbswACHiJrGxQ4qEo95HtVfMGTqQEAAwIAA3kAAzwE"
-    bot.send_photo(message.chat.id, photo_url, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
+    with open("welcome.png.png", "rb") as photo:
+        bot.send_photo(message.chat.id, photo, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🦴 Проверить продукт")
 def check_product(message):
     bot.send_message(message.chat.id, CHECK_TEXT)
-    
 
 @bot.message_handler(func=lambda m: m.text == "🥣 Собрать миску")
 def make_bowl(message):
@@ -117,7 +122,9 @@ def forward_to_you(message):
     user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
     bot.send_message(YOUR_TELEGRAM_ID, user_info)
     bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️")
-    if __name__ == '__main__':
+
+# ========== ЗАПУСК ==========
+if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "web":
         app.run(host="0.0.0.0", port=10000)
