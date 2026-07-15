@@ -1,15 +1,16 @@
 import telebot
 from telebot import types
+import os
 import threading
 import time
 import requests
-# ========== ТВОИ НАСТРОЙКИ (ЗАМЕНИ ЗДЕСЬ!) ==========
-import os
+from flask import Flask
 TOKEN = os.environ.get("BOT_TOKEN")
 YOUR_TELEGRAM_ID = 5029046232
 # =================================================
 
 bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 
 # ========== ЗАЩИТА ОТ ЗАСЫПАНИЯ ==========
 def keep_alive():
@@ -81,19 +82,19 @@ def get_main_keyboard():
         types.KeyboardButton("🐾 О клубе")
     )
     return keyboard
-
-@bot.message_handler(commands=['start'])
+    # ========== ВЕБ-ЧАСТЬ ==========
+@app.route('/')
+def home():
+    return "Bot is running!"
+   @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.send_message(message.chat.id, WELCOME_TEXT, reply_markup=get_main_keyboard())
+    photo_url = "AgACAgIAAxkBAAFPDTNqVWjhfM5pNpyXOQGz0RXN4RwbswACHiJrGxQ4qEo95HtVfMGTqQEAAwIAA3kAAzwE"
+    bot.send_photo(message.chat.id, photo_url, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🦴 Проверить продукт")
 def check_product(message):
     bot.send_message(message.chat.id, CHECK_TEXT)
     
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    photo_url = "AgACAgIAAxkBAAFPDTNqVWjhfM5pNpyXOQGz0RXN4RwbswACHiJrGxQ4qEo95HtVfMGTqQEAAwIAA3kAAzwE"  
-    bot.send_photo(message.chat.id, photo_url, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🥣 Собрать миску")
 def make_bowl(message):
@@ -116,18 +117,10 @@ def forward_to_you(message):
     user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
     bot.send_message(YOUR_TELEGRAM_ID, user_info)
     bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️")
-    from flask import Flask
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Bot is alive!"
-
-def run_flask():
-    app.run(host='0.0.0.0', port=10000)
-
-threading.Thread(target=run_flask, daemon=True).start()
-
-if __name__ == '__main__':
-    print("Бот запущен!")
-    bot.infinity_polling()
+    if __name__ == '__main__':
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "web":
+        app.run(host="0.0.0.0", port=10000)
+    else:
+        threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 10000}, daemon=True).start()
+        bot.infinity_polling()
