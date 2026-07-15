@@ -121,6 +121,18 @@ def forward_to_you(message):
     user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
     bot.send_message(YOUR_TELEGRAM_ID, user_info)
     bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️")
+    def auto_healer():
+    while True:
+        time.sleep(3600)
+        try:
+            response = requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
+            if response.status_code != 200:
+                time.sleep(5)
+                requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
+        except:
+            pass
+
+threading.Thread(target=auto_healer, daemon=True).start()
 
 # ========== ЗАПУСК ==========
 if __name__ == '__main__':
