@@ -116,6 +116,17 @@ def forward_to_you(message):
     user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
     bot.send_message(YOUR_TELEGRAM_ID, user_info)
     bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️")
+    from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is alive!"
+
+def run_flask():
+    app.run(host='0.0.0.0', port=10000)
+
+threading.Thread(target=run_flask, daemon=True).start()
 
 if __name__ == '__main__':
     print("Бот запущен!")
