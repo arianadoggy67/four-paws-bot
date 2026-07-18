@@ -123,15 +123,25 @@ def get_main_keyboard():
 
 # ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ТАБЛИЦЕЙ ==========
 def найти_продукт(продукт):
-    """Ищет продукт в Google Таблице по синонимам."""
+    """Ищет продукт в Google Таблице по синонимам и названию."""
     if not sheet:
         return None
     данные = sheet.get_all_records()
     продукт = продукт.lower().strip()
+    
+    # Сначала ищем по синонимам
     for строка in данные:
         синонимы = строка.get("Синонимы", "").lower()
-        if продукт in [s.strip() for s in синонимы.split(",")]:
+        список_синонимов = [s.strip() for s in синонимы.split(",")]
+        if продукт in список_синонимов:
             return строка
+    
+    # Если не нашли — ищем по названию продукта
+    for строка in данные:
+        название = строка.get("Продукт", "").lower().strip()
+        if продукт == название:
+            return строка
+    
     return None
 
 def определить_коэф_возраста(возраст):
@@ -294,7 +304,6 @@ def about_club(message):
 # Основной обработчик продуктов и запросов
 @bot.message_handler(func=lambda m: True)
 def handle_message(message):
-    # Кнопки уже обработаны выше, сюда попадают только текстовые сообщения
     if not sheet:
         bot.reply_to(message, "База временно недоступна. Попробуй позже.", reply_markup=get_main_keyboard())
         return
@@ -309,7 +318,6 @@ def handle_message(message):
             ответ = ответ.replace(f"📊 Разовая порция: {round(float(строка.get('Норма_г', 0)))} г", f"📊 Базовая норма: {строка.get('Норма_г', '')} г")
             bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
         else:
-            # Продукт не найден — пересылаем сообщение тебе
             user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
             try:
                 bot.send_message(YOUR_TELEGRAM_ID, user_info)
@@ -340,7 +348,6 @@ def handle_message(message):
             ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
             bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
         else:
-            # Продукт не найден — пересылаем сообщение тебе
             user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
             try:
                 bot.send_message(YOUR_TELEGRAM_ID, user_info)
@@ -365,7 +372,6 @@ def handle_message(message):
             ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
             bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
         else:
-            # Продукт не найден — пересылаем сообщение тебе
             user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
             try:
                 bot.send_message(YOUR_TELEGRAM_ID, user_info)
@@ -373,7 +379,6 @@ def handle_message(message):
                 pass
             bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
     else:
-        # Непонятный формат — пересылаем сообщение тебе
         user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
         try:
             bot.send_message(YOUR_TELEGRAM_ID, user_info)
