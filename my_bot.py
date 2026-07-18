@@ -5,6 +5,8 @@ import threading
 import time
 import requests
 from flask import Flask
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # ========== ТВОИ НАСТРОЙКИ ==========
 TOKEN = os.environ.get("BOT_TOKEN")
@@ -13,6 +15,28 @@ YOUR_TELEGRAM_ID = 5029046232
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
+
+# ========== КОНСТАНТЫ ДЛЯ ЧИХУАХУА ==========
+СРЕДНИЙ_ВЕС_ЧИХУАХУА = 2.5
+КОЭФ_ЩЕНОК = 0.5
+КОЭФ_ЮНИОР = 0.8
+КОЭФ_ВЗРОСЛАЯ = 1.0
+КОЭФ_ПОЖИЛАЯ = 0.7
+КОЭФ_СТЕРИЛИЗАЦИЯ = 0.8
+# ===========================================
+
+# ========== ПОДКЛЮЧЕНИЕ К GOOGLE ТАБЛИЦЕ ==========
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+if creds_json:
+    import json
+    creds_dict = json.loads(creds_json)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open("Выбрать продукт (чихуа-хуа)").sheet1  
+else:
+    sheet = None
+# ==================================================
 
 # ========== ЗАЩИТА ОТ ЗАСЫПАНИЯ ==========
 def keep_alive():
@@ -26,18 +50,19 @@ def keep_alive():
 threading.Thread(target=keep_alive, daemon=True).start()
 # =========================================
 
-# ========== ЕЖЕМИНУТНЫЙ ПИНГ ==========
-def minute_ping():
+# ========== ОЗДОРОВИТЕЛЬ ==========
+def health_check():
     while True:
-        time.sleep(60)
+        time.sleep(300)
         try:
-            requests.get("https://four-paws-bot.onrender.com")
+            requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
         except:
             pass
 
-threading.Thread(target=minute_ping, daemon=True).start()
-# ======================================
+threading.Thread(target=health_check, daemon=True).start()
+# ==================================
 
+# ========== ТЕКСТЫ ДЛЯ МЕНЮ ==========
 WELCOME_TEXT = """🐾 Привет, осознанный собачник!
 
 Я — клуб «Четыре Лапы Гурмана». Меня создала Ариана — профессиональный повар и хозяйка привередливой чихуахуа Мэгги. 🐶❤️
@@ -46,9 +71,8 @@ WELCOME_TEXT = """🐾 Привет, осознанный собачник!
 
 Вот что я умею:"""
 
-CHECK_TEXT = "🐾 Давай знакомиться! Напиши кличку своего питомца, его породу, возраст и вес. А потом — какой продукт хочешь проверить. Например: «Бублик, мопс, 3 года, 8 кг, яблоко»."
-MISKA_TEXT = "🥣 Напиши, пожалуйста, породу, вес и особенности твоего питомца (например, аллергии или чувствительный желудок). Например: «Мопс, 8 кг, аллергия на курицу». Я подберу безопасный ужин вручную."
-
+CHECK_TEXT = "🐾 Напиши название продукта, и я скажу, можно ли его твоему хвостику. А если хочешь персональную дозу — напиши в формате: «Кличка, порода, вес, возраст, стерилизация (да/нет), продукт»."
+MISKA_TEXT = "🥣 Конструктор миски пока в разработке. Скоро здесь можно будет собрать полноценный рацион для твоего питомца!"
 CLUB_TEXT = """👩‍🍳 **Четыре Лапы Гурмана Премиум** — это наш закрытый клуб для тех, кто хочет баловать питомца по-особенному.
 
 Внутри тебя ждут только эксклюзивные вещи, которых нет в бесплатной версии:
@@ -59,9 +83,7 @@ CLUB_TEXT = """👩‍🍳 **Четыре Лапы Гурмана Премиум
 
 Всё это — по платной подписке.
 Напиши «Хочу в клуб», и я пришлю реквизиты. Сразу после оплаты ты получишь ссылку на наш закрытый канал «Четыре лапы Премиум». Первые 20 участников — по специальной цене. 🐶❤️"""
-
 ASK_TEXT = "💬 Просто напиши свой вопрос прямо здесь, и Ариана ответит тебе лично. Я читаю все сообщения и рада помочь каждому хвостику."
-
 ABOUT_TEXT = """🐾 О клубе «Четыре Лапы Гурмана»
 
 Наш клуб родился из любви — к еде, к собакам и к осознанной заботе.
@@ -87,6 +109,7 @@ ABOUT_TEXT = """🐾 О клубе «Четыре Лапы Гурмана»
 
 Добро пожаловать в клуб. Мы тебе рады. 🐶❤️"""
 
+# ========== КНОПКИ ==========
 def get_main_keyboard():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     keyboard.add(
@@ -97,6 +120,144 @@ def get_main_keyboard():
         types.KeyboardButton("🐾 О клубе")
     )
     return keyboard
+
+# ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ТАБЛИЦЕЙ ==========
+def найти_продукт(продукт):
+    """Ищет продукт в Google Таблице по синонимам."""
+    if not sheet:
+        return None
+    данные = sheet.get_all_records()
+    продукт = продукт.lower().strip()
+    for строка in данные:
+        синонимы = строка.get("Синонимы", "").lower()
+        if продукт in [s.strip() for s in синонимы.split(",")]:
+            return строка
+    return None
+
+def определить_коэф_возраста(возраст):
+    """Определяет коэффициент возраста по строке возраста."""
+    возраст = возраст.lower().strip()
+    
+    if возраст in ["щенок", "puppy", "малыш"]:
+        return КОЭФ_ЩЕНОК, "щенок"
+    if "месяц" in возраст or "мес" in возраст:
+        return КОЭФ_ЩЕНОК, "щенок"
+    if возраст in ["юниор", "подросток"]:
+        return КОЭФ_ЮНИОР, "юниор"
+    if возраст in ["пожилая", "пожилой", "старая", "старый", "senior"]:
+        return КОЭФ_ПОЖИЛАЯ, "пожилая"
+    
+    if "год" in возраст or "годик" in возраст or "лет" in возраст:
+        try:
+            years = int(''.join(filter(str.isdigit, возраст)))
+            if years < 1:
+                return КОЭФ_ЩЕНОК, "щенок"
+            elif years < 2:
+                return КОЭФ_ЮНИОР, "юниор"
+            elif years < 7:
+                return КОЭФ_ВЗРОСЛАЯ, "взрослая"
+            else:
+                return КОЭФ_ПОЖИЛАЯ, "пожилая"
+        except:
+            pass
+    
+    return КОЭФ_ВЗРОСЛАЯ, "взрослая"
+
+def разобрать_вес(вес_текст):
+    """Понимает вес в формате '3 кг 500 г', '3.5', '2 кг', '500 г'."""
+    вес_текст = вес_текст.strip().lower().replace(",", ".")
+    
+    if "кг" in вес_текст and "г" in вес_текст:
+        кг = float(вес_текст.split("кг")[0].strip())
+        г = float(вес_текст.split("кг")[1].replace("г", "").strip())
+        return кг + г / 1000
+    elif "кг" in вес_текст:
+        return float(вес_текст.replace("кг", "").strip())
+    elif "г" in вес_текст:
+        return float(вес_текст.replace("г", "").strip()) / 1000
+    else:
+        return float(вес_текст)
+
+def получить_средний_вес(порода):
+    """Возвращает средний вес и название породы."""
+    порода = порода.lower().strip()
+    if "чихуа" in порода:
+        return СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа"
+    return СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа"
+
+def рассчитать_дозу(строка, вес_собаки, возраст, стерилизована, средний_вес_породы, порода_название):
+    """Считает персональную дозу."""
+    норма = float(строка.get("Норма_г", 0))
+    эмодзи = строка.get("Эмодзи", "")
+    продукт = строка.get("Продукт", "")
+    единица = строка.get("Единица_измерения", "")
+    вес_ед = float(строка.get("Вес_единицы_г", 0))
+    статус = строка.get("Можно_Нельзя", "")
+    почему = строка.get("Почему", "")
+    степень_опасности = строка.get("Степень_опасности", "")
+    важно = строка.get("Важно", "")
+    история = строка.get("История_Мэгги", "")
+    совет = строка.get("Совет от хозяйки", "")
+    источник = строка.get("Источник", "")
+    
+    if норма == 0:
+        ответ = f"{эмодзи} {продукт} — {статус}\n"
+        if степень_опасности:
+            ответ += f"⚠️ {степень_опасности}\n"
+        ответ += f"📝 {почему}\n"
+        if важно:
+            ответ += f"⚠️ Важно: {важно}\n"
+        if история:
+            ответ += f"🐶 История Мэгги: {история}\n"
+        if совет:
+            ответ += f"💡 Совет от хозяйки: {совет}\n"
+        if источник:
+            ответ += f"🔬 Источник: {источник}\n"
+        ответ += "🍪 Это не еда для собак!"
+        return ответ
+    
+    коэф_возраста, категория = определить_коэф_возраста(возраст)
+    коэф_стерилизации = КОЭФ_СТЕРИЛИЗАЦИЯ if стерилизована else 1.0
+    
+    доза = норма * (вес_собаки / средний_вес_породы) * коэф_возраста * коэф_стерилизации
+    доза = round(доза)
+    
+    кол_во = round(доза / вес_ед) if вес_ед > 0 else 0
+    
+    ответ = f"{эмодзи} {статус}\n\n"
+    ответ += f"📝 {почему}\n"
+    if степень_опасности:
+        ответ += f"⚠️ {степень_опасности}\n"
+    
+    ответ += f"\n📊 Разовая порция: {доза} г"
+    if кол_во > 0 and единица:
+        ответ += f" (примерно {кол_во} {единица})"
+    
+    if вес_собаки < средний_вес_породы * 0.8:
+        ответ += f"\nℹ️ Доза уменьшена: питомец весит меньше среднего {порода_название}."
+    elif вес_собаки > средний_вес_породы * 1.2:
+        ответ += f"\nℹ️ Доза увеличена: питомец крупнее среднего {порода_название}."
+    if категория == "щенок":
+        ответ += "\nℹ️ Доза уменьшена: питомец — щенок."
+    elif категория == "юниор":
+        ответ += "\nℹ️ Доза скорректирована: питомец — юниор."
+    elif категория == "пожилая":
+        ответ += "\nℹ️ Доза уменьшена: питомец — пожилая собака."
+    if стерилизована:
+        ответ += "\nℹ️ Доза скорректирована с учётом стерилизации."
+    
+    ответ += "\n🍪 Это лакомство, не основной корм."
+    
+    if важно:
+        ответ += f"\n\n⚠️ Важно: {важно}"
+    if совет:
+        ответ += f"\n💡 Совет от хозяйки: {совет}"
+    if история:
+        ответ += f"\n\n🐶 История Мэгги: {история}"
+    if источник:
+        ответ += f"\n🔬 Источник: {источник}"
+    
+    return ответ
 
 # ========== ВЕБ-ЧАСТЬ ==========
 @app.route('/')
@@ -109,31 +270,91 @@ def send_welcome(message):
     photo_url = "https://i.postimg.cc/qvmR3JgW/Artguru-20260713213826-artguru-(1).png"
     bot.send_photo(message.chat.id, photo_url, caption=WELCOME_TEXT, reply_markup=get_main_keyboard())
 
+# Обработчики кнопок
 @bot.message_handler(func=lambda m: m.text == "🦴 Проверить продукт")
 def check_product(message):
-    bot.send_message(message.chat.id, CHECK_TEXT)
+    bot.send_message(message.chat.id, CHECK_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🥣 Собрать миску")
 def make_bowl(message):
-    bot.send_message(message.chat.id, MISKA_TEXT)
+    bot.send_message(message.chat.id, MISKA_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "👩‍🍳 Лакомства от Шефа")
 def chef_treats(message):
-    bot.send_message(message.chat.id, CLUB_TEXT)
+    bot.send_message(message.chat.id, CLUB_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "💬 Спросить Ариану")
 def ask_ariana(message):
-    bot.send_message(message.chat.id, ASK_TEXT)
+    bot.send_message(message.chat.id, ASK_TEXT, reply_markup=get_main_keyboard())
 
 @bot.message_handler(func=lambda m: m.text == "🐾 О клубе")
 def about_club(message):
-    bot.send_message(message.chat.id, ABOUT_TEXT)
+    bot.send_message(message.chat.id, ABOUT_TEXT, reply_markup=get_main_keyboard())
 
+# Основной обработчик
 @bot.message_handler(func=lambda m: True)
-def forward_to_you(message):
-    user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
-    bot.send_message(YOUR_TELEGRAM_ID, user_info)
-    bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️")
+def handle_message(message):
+    if not sheet:
+        bot.reply_to(message, "База временно недоступна. Попробуй позже.")
+        return
+    
+    текст = message.text.strip()
+    
+    # Простой запрос — только продукт
+    if "," not in текст:
+        строка = найти_продукт(текст)
+        if строка:
+            ответ = рассчитать_дозу(строка, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "взрослая", False, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа")
+            ответ = ответ.replace(f"📊 Разовая порция: {round(float(строка.get('Норма_г', 0)))} г", f"📊 Базовая норма: {строка.get('Норма_г', '')} г")
+            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
+        else:
+            bot.reply_to(message, "Продукт не найден. Попробуй другое название.", reply_markup=get_main_keyboard())
+        return
+    
+    # Полный запрос с данными о собаке
+    части = [p.strip() for p in текст.split(",")]
+    if len(части) >= 6:
+        кличка = части[0]
+        порода = части[1]
+        try:
+            вес = разобрать_вес(части[2])
+        except:
+            bot.reply_to(message, "Вес должен быть числом, например: 2.5, 3 кг, 3 кг 500 г", reply_markup=get_main_keyboard())
+            return
+        возраст = части[3]
+        стерилизована = "да" in части[4].lower() or "yes" in части[4].lower()
+        продукт = части[5]
+        
+        средний_вес_породы, порода_название = получить_средний_вес(порода)
+        
+        строка = найти_продукт(продукт)
+        if строка:
+            ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, средний_вес_породы, порода_название)
+            ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
+            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
+        else:
+            bot.reply_to(message, "Продукт не найден. Попробуй другое название.", reply_markup=get_main_keyboard())
+    elif len(части) >= 5:
+        # Старый формат без породы
+        кличка = части[0]
+        try:
+            вес = разобрать_вес(части[1])
+        except:
+            bot.reply_to(message, "Вес должен быть числом, например: 2.5, 3 кг, 3 кг 500 г", reply_markup=get_main_keyboard())
+            return
+        возраст = части[2]
+        стерилизована = "да" in части[3].lower() or "yes" in части[3].lower()
+        продукт = части[4]
+        
+        строка = найти_продукт(продукт)
+        if строка:
+            ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа")
+            ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
+            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
+        else:
+            bot.reply_to(message, "Продукт не найден. Попробуй другое название.", reply_markup=get_main_keyboard())
+    else:
+        bot.reply_to(message, "Формат: Кличка, порода, вес, возраст, стерилизация, продукт\nПример: Бублик, чихуахуа, 2.5, взрослая, нет, яблоко", reply_markup=get_main_keyboard())
 
 # ========== ЗАПУСК ==========
 if __name__ == '__main__':
