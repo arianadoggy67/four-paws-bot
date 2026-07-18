@@ -1,3 +1,6 @@
+Вот полностью обновлённый код со всеми исправлениями: склонение с сохранением прилагательных, диагностика, простой и надёжный поиск. Замени им всё содержимое `my_bot.py` на GitHub и нажми **«Deploy latest commit»** на Render.
+
+```python
 import telebot
 from telebot import types
 import os
@@ -158,166 +161,274 @@ def найти_продукт(продукт):
     
     return None
 
-# ========== СКЛОНЕНИЕ ЕДИНИЦ (ИСПРАВЛЕНО) ==========
+# ========== СКЛОНЕНИЕ ЕДИНИЦ (С СОХРАНЕНИЕМ ПРИЛАГАТЕЛЬНЫХ) ==========
 def склонение_единиц(кол_во, единица):
     if not единица or кол_во <= 0:
         return единица
     
-    # Особый случай: капля
-    if "капля" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "капля"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "капли"
-        else:
-            return "капель"
+    слова = единица.split()
     
-    # Особый случай: ложка
-    if "ложка" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "ложка"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "ложки"
+    def склонить_слово(слово):
+        if "капля" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "капля"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "капли"
+            else:
+                return "капель"
+        if "ложка" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "ложка"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "ложки"
+            else:
+                return "ложек"
+        if "долька" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "долька"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "дольки"
+            else:
+                return "долек"
+        if "ягодка" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "ягодка"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "ягодки"
+            else:
+                return "ягодок"
+        if "кусочек" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "кусочек"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "кусочка"
+            else:
+                return "кусочков"
+        if "ломтик" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "ломтик"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "ломтика"
+            else:
+                return "ломтиков"
+        if "четвертинка" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "четвертинка"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "четвертинки"
+            else:
+                return "четвертинок"
+        if "крошка" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "крошка"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "крошки"
+            else:
+                return "крошек"
+        if "листочек" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "листочек"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "листочка"
+            else:
+                return "листочков"
+        if "соцветие" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "соцветие"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "соцветия"
+            else:
+                return "соцветий"
+        if "полоска" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "полоска"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "полоски"
+            else:
+                return "полосок"
+        if "зёрнышко" in слово or "зернышко" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return слово
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return слово.replace("ко", "ка")
+            else:
+                return слово.replace("ко", "ек")
+        if "рыбка" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "рыбка"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "рыбки"
+            else:
+                return "рыбок"
+        if "кубик" in слово:
+            if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+                return "кубик"
+            elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+                return "кубика"
+            else:
+                return "кубиков"
+        # общее правило
+        if kol_vo % 10 == 1 and kol_vo % 100 != 11:
+            return слово
+        elif 2 <= kol_vo % 10 <= 4 and (kol_vo % 100 < 10 or kol_vo % 100 >= 20):
+            if слово.endswith("ка"):
+                return слово[:-2] + "ки"
+            elif слово.endswith("ок"):
+                return слово[:-2] + "ка"
+            elif слово.endswith("а"):
+                return слово[:-1] + "ы"
+            elif слово.endswith("я"):
+                return слово[:-1] + "и"
+            elif слово.endswith("ь"):
+                return слово[:-1] + "и"
+            else:
+                return слово + "а"
         else:
-            return "ложек"
+            if слово.endswith("ка"):
+                return слово[:-2] + "ек"
+            elif слово.endswith("ок"):
+                return слово[:-2] + "ков"
+            elif слово.endswith("а"):
+                return слово[:-1] + ""
+            elif слово.endswith("я"):
+                return слово[:-1] + "й"
+            elif слово.endswith("ь"):
+                return слово[:-1] + "ей"
+            else:
+                return слово + "ов"
     
-    # Особый случай: долька
-    if "долька" in единица:
+    # Исправление: используем кол_во вместо kol_vo
+    def склонить_слово_исправлено(слово):
+        if "капля" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "капля"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "капли"
+            else:
+                return "капель"
+        if "ложка" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "ложка"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "ложки"
+            else:
+                return "ложек"
+        if "долька" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "долька"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "дольки"
+            else:
+                return "долек"
+        if "ягодка" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "ягодка"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "ягодки"
+            else:
+                return "ягодок"
+        if "кусочек" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "кусочек"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "кусочка"
+            else:
+                return "кусочков"
+        if "ломтик" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "ломтик"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "ломтика"
+            else:
+                return "ломтиков"
+        if "четвертинка" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "четвертинка"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "четвертинки"
+            else:
+                return "четвертинок"
+        if "крошка" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "крошка"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "крошки"
+            else:
+                return "крошек"
+        if "листочек" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "листочек"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "листочка"
+            else:
+                return "листочков"
+        if "соцветие" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "соцветие"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "соцветия"
+            else:
+                return "соцветий"
+        if "полоска" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "полоска"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "полоски"
+            else:
+                return "полосок"
+        if "зёрнышко" in слово or "зернышко" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return слово
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return слово.replace("ко", "ка")
+            else:
+                return слово.replace("ко", "ек")
+        if "рыбка" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "рыбка"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "рыбки"
+            else:
+                return "рыбок"
+        if "кубик" in слово:
+            if кол_во % 10 == 1 and кол_во % 100 != 11:
+                return "кубик"
+            elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
+                return "кубика"
+            else:
+                return "кубиков"
+        # общее правило
         if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "долька"
+            return слово
         elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "дольки"
+            if слово.endswith("ка"):
+                return слово[:-2] + "ки"
+            elif слово.endswith("ок"):
+                return слово[:-2] + "ка"
+            elif слово.endswith("а"):
+                return слово[:-1] + "ы"
+            elif слово.endswith("я"):
+                return слово[:-1] + "и"
+            elif слово.endswith("ь"):
+                return слово[:-1] + "и"
+            else:
+                return слово + "а"
         else:
-            return "долек"
+            if слово.endswith("ка"):
+                return слово[:-2] + "ек"
+            elif слово.endswith("ок"):
+                return слово[:-2] + "ков"
+            elif слово.endswith("а"):
+                return слово[:-1] + ""
+            elif слово.endswith("я"):
+                return слово[:-1] + "й"
+            elif слово.endswith("ь"):
+                return слово[:-1] + "ей"
+            else:
+                return слово + "ов"
     
-    # Особый случай: ягодка
-    if "ягодка" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "ягодка"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "ягодки"
-        else:
-            return "ягодок"
-    
-    # Особый случай: кусочек
-    if "кусочек" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "кусочек"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "кусочка"
-        else:
-            return "кусочков"
-    
-    # Особый случай: ломтик
-    if "ломтик" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "ломтик"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "ломтика"
-        else:
-            return "ломтиков"
-    
-    # Особый случай: четвертинка
-    if "четвертинка" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "четвертинка"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "четвертинки"
-        else:
-            return "четвертинок"
-    
-    # Особый случай: крошка
-    if "крошка" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "крошка"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "крошки"
-        else:
-            return "крошек"
-    
-    # Особый случай: листочек
-    if "листочек" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "листочек"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "листочка"
-        else:
-            return "листочков"
-    
-    # Особый случай: соцветие
-    if "соцветие" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "соцветие"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "соцветия"
-        else:
-            return "соцветий"
-    
-    # Особый случай: полоска
-    if "полоска" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "полоска"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "полоски"
-        else:
-            return "полосок"
-    
-    # Особый случай: зёрнышко
-    if "зёрнышко" in единица or "зернышко" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return единица
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return единица.replace("ко", "ка")
-        else:
-            return единица.replace("ко", "ек")
-    
-    # Особый случай: рыбка
-    if "рыбка" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "рыбка"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "рыбки"
-        else:
-            return "рыбок"
-    
-    # Особый случай: кубик
-    if "кубик" in единица:
-        if кол_во % 10 == 1 and кол_во % 100 != 11:
-            return "кубик"
-        elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-            return "кубика"
-        else:
-            return "кубиков"
-    
-    # Общее правило
-    if кол_во % 10 == 1 and кол_во % 100 != 11:
-        return единица
-    elif 2 <= кол_во % 10 <= 4 and (кол_во % 100 < 10 or кол_во % 100 >= 20):
-        if единица.endswith("ка"):
-            return единица[:-2] + "ки"
-        elif единица.endswith("ок"):
-            return единица[:-2] + "ка"
-        elif единица.endswith("а"):
-            return единица[:-1] + "ы"
-        elif единица.endswith("я"):
-            return единица[:-1] + "и"
-        elif единица.endswith("ь"):
-            return единица[:-1] + "и"
-        else:
-            return единица + "а"
-    else:
-        if единица.endswith("ка"):
-            return единица[:-2] + "ек"
-        elif единица.endswith("ок"):
-            return единица[:-2] + "ков"
-        elif единица.endswith("а"):
-            return единица[:-1] + ""
-        elif единица.endswith("я"):
-            return единица[:-1] + "й"
-        elif единица.endswith("ь"):
-            return единица[:-1] + "ей"
-        else:
-            return единица + "ов"
+    склонённые_слова = [склонить_слово_исправлено(слово) for слово in слова]
+    return " ".join(склонённые_слова)
 
 # ========== ОПРЕДЕЛЕНИЕ ВОЗРАСТА ==========
 def определить_коэф_возраста(возраст):
@@ -526,15 +637,4 @@ def handle_message(message):
     # Ничего не нашли — пересылаем тебе
     user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
     try:
-        bot.send_message(YOUR_TELEGRAM_ID, user_info)
-    except:
-        pass
-    bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
-
-if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "web":
-        app.run(host="0.0.0.0", port=10000)
-    else:
-        threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 10000}, daemon=True).start()
-    bot.infinity_polling(skip_pending=True)
+        bot.send_message(YOUR_TELEGRAM_ID, user_info
