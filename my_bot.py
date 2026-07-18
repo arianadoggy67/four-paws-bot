@@ -33,7 +33,7 @@ if creds_json:
     creds_dict = json.loads(creds_json)
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
-    sheet = client.open("Выбрать продукт (чихуа-хуа)").sheet1  
+    sheet = client.open("Выбрать продукт (чихуа-хуа)").worksheet("Выбрать продукт (чихуа-хуа)")
 else:
     sheet = None
 # ==================================================
@@ -291,11 +291,12 @@ def ask_ariana(message):
 def about_club(message):
     bot.send_message(message.chat.id, ABOUT_TEXT, reply_markup=get_main_keyboard())
 
-# Основной обработчик
+# Основной обработчик продуктов и запросов
 @bot.message_handler(func=lambda m: True)
 def handle_message(message):
+    # Кнопки уже обработаны выше, сюда попадают только текстовые сообщения
     if not sheet:
-        bot.reply_to(message, "База временно недоступна. Попробуй позже.")
+        bot.reply_to(message, "База временно недоступна. Попробуй позже.", reply_markup=get_main_keyboard())
         return
     
     текст = message.text.strip()
@@ -308,7 +309,13 @@ def handle_message(message):
             ответ = ответ.replace(f"📊 Разовая порция: {round(float(строка.get('Норма_г', 0)))} г", f"📊 Базовая норма: {строка.get('Норма_г', '')} г")
             bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
         else:
-            bot.reply_to(message, "Продукт не найден. Попробуй другое название.", reply_markup=get_main_keyboard())
+            # Продукт не найден — пересылаем сообщение тебе
+            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
+            try:
+                bot.send_message(YOUR_TELEGRAM_ID, user_info)
+            except:
+                pass
+            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
         return
     
     # Полный запрос с данными о собаке
@@ -333,7 +340,13 @@ def handle_message(message):
             ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
             bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
         else:
-            bot.reply_to(message, "Продукт не найден. Попробуй другое название.", reply_markup=get_main_keyboard())
+            # Продукт не найден — пересылаем сообщение тебе
+            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
+            try:
+                bot.send_message(YOUR_TELEGRAM_ID, user_info)
+            except:
+                pass
+            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
     elif len(части) >= 5:
         # Старый формат без породы
         кличка = части[0]
@@ -352,9 +365,21 @@ def handle_message(message):
             ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
             bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
         else:
-            bot.reply_to(message, "Продукт не найден. Попробуй другое название.", reply_markup=get_main_keyboard())
+            # Продукт не найден — пересылаем сообщение тебе
+            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
+            try:
+                bot.send_message(YOUR_TELEGRAM_ID, user_info)
+            except:
+                pass
+            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
     else:
-        bot.reply_to(message, "Формат: Кличка, порода, вес, возраст, стерилизация, продукт\nПример: Бублик, чихуахуа, 2.5, взрослая, нет, яблоко", reply_markup=get_main_keyboard())
+        # Непонятный формат — пересылаем сообщение тебе
+        user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
+        try:
+            bot.send_message(YOUR_TELEGRAM_ID, user_info)
+        except:
+            pass
+        bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
 
 # ========== ЗАПУСК ==========
 if __name__ == '__main__':
