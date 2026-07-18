@@ -325,7 +325,6 @@ def handle_message(message):
     if "," not in текст:
         строка = найти_продукт(текст)
         if not строка:
-            # ДИАГНОСТИКА
             данные = sheet.get_all_records()
             отладка = "Не нашёл. Первые 3 синонима в таблице:\n"
             for i, s in enumerate(данные[:3]):
@@ -352,20 +351,20 @@ def handle_message(message):
         стерилизована = "да" in части[4].lower() or "yes" in части[4].lower()
         продукт = части[5]
         
-        средний_вес_породы, порода_название = получить_средний_вес(порода)
-        
+        # ДИАГНОСТИКА ДЛЯ ПОЛНОГО ЗАПРОСА
         строка = найти_продукт(продукт)
-        if строка:
-            ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, средний_вес_породы, порода_название)
-            ответ = ответ.replace(get_val(строка, "Можно_нельзя"), f"{кличке} можно {продукт}!")
-            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
-        else:
-            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
-            try:
-                bot.send_message(YOUR_TELEGRAM_ID, user_info)
-            except:
-                pass
-            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
+        if not строка:
+            данные = sheet.get_all_records()
+            отладка = f"Ищу: «{продукт}». Не нашёл. Первые 3 синонима:\n"
+            for i, s in enumerate(данные[:3]):
+                отладка += f"{get_val(s, 'Продукт')}: {get_val(s, 'Синонимы')}\n"
+            bot.reply_to(message, отладка, reply_markup=get_main_keyboard())
+            return
+        
+        средний_вес_породы, порода_название = получить_средний_вес(порода)
+        ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, средний_вес_породы, порода_название)
+        ответ = ответ.replace(get_val(строка, "Можно_нельзя"), f"{кличке} можно {продукт}!")
+        bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
     elif len(части) >= 5:
         кличка = части[0]
         try:
@@ -378,17 +377,17 @@ def handle_message(message):
         продукт = части[4]
         
         строка = найти_продукт(продукт)
-        if строка:
-            ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа")
-            ответ = ответ.replace(get_val(строка, "Можно_нельзя"), f"{кличке} можно {продукт}!")
-            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
-        else:
-            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
-            try:
-                bot.send_message(YOUR_TELEGRAM_ID, user_info)
-            except:
-                pass
-            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
+        if not строка:
+            данные = sheet.get_all_records()
+            отладка = f"Ищу: «{продукт}». Не нашёл. Первые 3 синонима:\n"
+            for i, s in enumerate(данные[:3]):
+                отладка += f"{get_val(s, 'Продукт')}: {get_val(s, 'Синонимы')}\n"
+            bot.reply_to(message, отладка, reply_markup=get_main_keyboard())
+            return
+        
+        ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа")
+        ответ = ответ.replace(get_val(строка, "Можно_нельзя"), f"{кличке} можно {продукт}!")
+        bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
     else:
         user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
         try:
@@ -404,5 +403,4 @@ if __name__ == '__main__':
         app.run(host="0.0.0.0", port=10000)
     else:
         threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 10000}, daemon=True).start()
-    bot.infinity_polling(skip_pending=True)
-  
+bot.infinity_polling(skip_pending=True)
