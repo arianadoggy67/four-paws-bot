@@ -308,83 +308,15 @@ def handle_message(message):
         bot.reply_to(message, "База временно недоступна. Попробуй позже.", reply_markup=get_main_keyboard())
         return
     
-    текст = message.text.strip()
-    
-    # Простой запрос — только продукт
-    if "," not in текст:
-        строка = найти_продукт(текст)
-        if строка:
-            ответ = рассчитать_дозу(строка, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "взрослая", False, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа")
-            ответ = ответ.replace(f"📊 Разовая порция: {round(float(строка.get('Норма_г', 0)))} г", f"📊 Базовая норма: {строка.get('Норма_г', '')} г")
-            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
-        else:
-            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
-            try:
-                bot.send_message(YOUR_TELEGRAM_ID, user_info)
-            except:
-                pass
-            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
+    # ========== ТЕСТ: проверяем подключение к таблице ==========
+    try:
+        тест = sheet.get_all_records()
+        bot.reply_to(message, f"✅ Таблица найдена! Строк: {len(тест)}. Первая строка: {тест[0] if тест else 'пусто'}", reply_markup=get_main_keyboard())
         return
-    
-    # Полный запрос с данными о собаке
-    части = [p.strip() for p in текст.split(",")]
-    if len(части) >= 6:
-        кличка = части[0]
-        порода = части[1]
-        try:
-            вес = разобрать_вес(части[2])
-        except:
-            bot.reply_to(message, "Вес должен быть числом, например: 2.5, 3 кг, 3 кг 500 г", reply_markup=get_main_keyboard())
-            return
-        возраст = части[3]
-        стерилизована = "да" in части[4].lower() or "yes" in части[4].lower()
-        продукт = части[5]
-        
-        средний_вес_породы, порода_название = получить_средний_вес(порода)
-        
-        строка = найти_продукт(продукт)
-        if строка:
-            ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, средний_вес_породы, порода_название)
-            ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
-            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
-        else:
-            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
-            try:
-                bot.send_message(YOUR_TELEGRAM_ID, user_info)
-            except:
-                pass
-            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
-    elif len(части) >= 5:
-        # Старый формат без породы
-        кличка = части[0]
-        try:
-            вес = разобрать_вес(части[1])
-        except:
-            bot.reply_to(message, "Вес должен быть числом, например: 2.5, 3 кг, 3 кг 500 г", reply_markup=get_main_keyboard())
-            return
-        возраст = части[2]
-        стерилизована = "да" in части[3].lower() or "yes" in части[3].lower()
-        продукт = части[4]
-        
-        строка = найти_продукт(продукт)
-        if строка:
-            ответ = рассчитать_дозу(строка, вес, возраст, стерилизована, СРЕДНИЙ_ВЕС_ЧИХУАХУА, "чихуахуа")
-            ответ = ответ.replace(строка.get("Можно_Нельзя", ""), f"{кличке} можно {продукт}!")
-            bot.reply_to(message, ответ, reply_markup=get_main_keyboard())
-        else:
-            user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
-            try:
-                bot.send_message(YOUR_TELEGRAM_ID, user_info)
-            except:
-                pass
-            bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
-    else:
-        user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
-        try:
-            bot.send_message(YOUR_TELEGRAM_ID, user_info)
-        except:
-            pass
-        bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
+    except Exception as e:
+        bot.reply_to(message, f"❌ Ошибка таблицы: {str(e)}", reply_markup=get_main_keyboard())
+        return
+    # ===========================================================
 
 # ========== ЗАПУСК ==========
 if __name__ == '__main__':
