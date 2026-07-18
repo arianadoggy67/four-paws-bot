@@ -1,6 +1,3 @@
-Вот полностью обновлённый код со всеми исправлениями: склонение с сохранением прилагательных, диагностика, простой и надёжный поиск. Замени им всё содержимое `my_bot.py` на GitHub и нажми **«Deploy latest commit»** на Render.
-
-```python
 import telebot
 from telebot import types
 import os
@@ -637,4 +634,15 @@ def handle_message(message):
     # Ничего не нашли — пересылаем тебе
     user_info = f"📩 Сообщение от @{message.from_user.username or 'без ника'} (ID: {message.from_user.id}):\n\n{message.text}"
     try:
-        bot.send_message(YOUR_TELEGRAM_ID, user_info
+        bot.send_message(YOUR_TELEGRAM_ID, user_info)
+    except:
+        pass
+    bot.reply_to(message, "Спасибо! Ариана получила твой вопрос и скоро ответит ❤️", reply_markup=get_main_keyboard())
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "web":
+        app.run(host="0.0.0.0", port=10000)
+    else:
+        threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 10000}, daemon=True).start()
+    bot.infinity_polling(skip_pending=True)
