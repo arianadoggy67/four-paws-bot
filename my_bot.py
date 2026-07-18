@@ -402,4 +402,4 @@ if __name__ == '__main__':
     else:
         threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 10000}, daemon=True).start()
 bot.infinity_polling(skip_pending=True)
-        bot.infinity_polling(skip_pending=True)
+        
