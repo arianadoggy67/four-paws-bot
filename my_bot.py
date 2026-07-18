@@ -50,17 +50,17 @@ def keep_alive():
 threading.Thread(target=keep_alive, daemon=True).start()
 # =========================================
 
-# ========== ОЗДОРОВИТЕЛЬ ==========
+# ========== ОЗДОРОВИТЕЛЬ (каждые 30 секунд) ==========
 def health_check():
     while True:
-        time.sleep(300)
+        time.sleep(30)
         try:
             requests.get(f"https://api.telegram.org/bot{TOKEN}/getMe")
         except:
             pass
 
 threading.Thread(target=health_check, daemon=True).start()
-# ==================================
+# =====================================================
 
 # ========== ТЕКСТЫ ДЛЯ МЕНЮ ==========
 WELCOME_TEXT = """🐾 Привет, осознанный собачник!
